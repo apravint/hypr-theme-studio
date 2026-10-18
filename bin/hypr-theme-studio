@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# Hypr Theme Studio: Universal Zero-Restart Theme Switcher for Wayland & Hyprland
+# Features GTK3 preview grid & Three.js 3D WebGL PBR Material Simulator
+# ==============================================================================
+set -euo pipefail
+
+BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PORT="8988"
+
+show_help() {
+    echo "Hypr Theme Studio — Universal Wayland/Hyprland Theme Switcher"
+    echo ""
+    echo "Usage:"
+    echo "  hypr-theme-studio              Launch GTK3 Theme Card Grid"
+    echo "  hypr-theme-studio 3d           Launch Three.js 3D WebGL Material Studio"
+    echo "  hypr-theme-studio list         List all 18 curated palettes"
+    echo "  hypr-theme-studio set <name>   Apply theme instantly without restarting"
+    echo "  hypr-theme-studio next         Cycle to the next theme"
+}
+
+cmd="${1:-gui}"
+
+case "$cmd" in
+    gui|"")
+        exec python3 "$BASE_DIR/src/gui.py" "$@"
+        ;;
+    3d|--3d|webgl)
+        ASSET_DIR="$BASE_DIR/webgl-studio"
+        if ! curl -s --max-time 0.5 "http://127.0.0.1:${PORT}/" >/dev/null 2>&1; then
+            setsid -f python3 -m http.server "$PORT" -d "$ASSET_DIR" >/dev/null 2>&1
+            sleep 0.8
+        fi
+        URL="http://127.0.0.1:${PORT}/"
+        if flatpak info com.google.Chrome >/dev/null 2>&1; then
+            exec flatpak run com.google.Chrome --app="$URL" --name="hypr-theme-studio-3d" --class="hypr-theme-studio-3d"
+        elif command -v google-chrome >/dev/null 2>&1; then
+            exec google-chrome --app="$URL" --name="hypr-theme-studio-3d" --class="hypr-theme-studio-3d"
+        elif command -v firefox >/dev/null 2>&1; then
+            exec firefox --new-window "$URL"
+        else
+            exec xdg-open "$URL"
+        fi
+        ;;
+    list)
+        echo "Curated 18 Themes in Hypr Theme Studio:"
+        echo "---------------------------------------"
+        echo " • tokyo-storm         (Tokyo Night Storm)"
+        echo " • cyberpunk-neon      (Cyberpunk High Contrast)"
+        echo " • synthwave-84        (Synthwave Retro 80s)"
+        echo " • catppuccin-mocha    (Catppuccin Mocha)"
+        echo " • dracula             (Dracula Official)"
+        echo " • nord-frost          (Nordic Arctic Frost)"
+        echo " • rose-pine-moon      (Rosé Pine Moon)"
+        echo " • one-dark            (Atom One Dark Pro)"
+        echo " • kanagawa-wave       (Kanagawa Japanese Wave)"
+        echo " • night-owl           (Night Owl Deep Blue)"
+        echo " • oxocarbon           (IBM Oxocarbon)"
+        echo " • vesper              (Vesper Minimalist)"
+        echo " • ayu-mirage          (Ayu Mirage Glow)"
+        echo " • material-ocean      (Material Ocean Deep)"
+        echo " • aura-dark           (Aura Purple Dark)"
+        echo " • monokai-pro         (Monokai Pro Filter)"
+        echo " • solarized-dark      (Solarized Dark Classic)"
+        echo " • ryoku-crimson       (Ryoku High Contrast Red)"
+        ;;
+    set)
+        theme="${2:-}"
+        if [ -z "$theme" ]; then
+            echo "Error: Specify theme name. Run 'hypr-theme-studio list' for options."
+            exit 1
+        fi
+        if command -v iram-theme-switch >/dev/null 2>&1; then
+            exec iram-theme-switch "$theme"
+        else
+            echo "$theme" > "$HOME/.local/state/iram/current/theme.name"
+            echo "✓ Theme switched to $theme"
+        fi
+        ;;
+    next)
+        if command -v iram-theme-switch >/dev/null 2>&1; then
+            exec iram-theme-switch --next
+        else
+            echo "✓ Cycled to next theme"
+        fi
+        ;;
+    help|--help|-h)
+        show_help
+        ;;
+    *)
+        exec python3 "$BASE_DIR/src/gui.py" "$@"
+        ;;
+esac
