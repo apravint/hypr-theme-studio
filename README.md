@@ -1,10 +1,22 @@
-# 🎨 Hypr Theme Studio: Zero-Restart Theme Switcher & 3D WebGL Palette Studio
+# 🎨 Hypr Theme Studio: Sovereign Theme Switcher & 3D WebGL Palette Studio
 
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Hyprland%20%7C%20Wayland-purple.svg)]()
-[![Engine](https://img.shields.io/badge/engine-Three.js%20r128%20%7C%20GTK3-cyan.svg)](https://github.com/mrdoob/three.js/)
+[![Engine](https://img.shields.io/badge/engine-Three.js%20r128%20%7C%20GTK3%20Cairo-cyan.svg)](https://github.com/mrdoob/three.js/)
 
-**Hypr Theme Studio** is an open-source, zero-restart visual theme switcher and 3D WebGL palette simulator engineered for **Hyprland, Sway, and modern Wayland desktops**. It switches borders, Waybar gradients, Alacritty colors, GTK themes, and terminal environments simultaneously in <100ms with zero restarts.
+**Hypr Theme Studio** is an open-source, zero-restart visual theme switcher and 3D WebGL palette simulator engineered for **Hyprland, Sway, and modern Wayland desktops**. It switches window borders, Waybar gradients, Alacritty colors, GTK themes, and terminal environments simultaneously in <100ms with zero restarts.
+
+---
+
+## ✨ Features
+
+- **43 Curated Palettes**: Tokyo Storm, Cyberpunk Neon, Synthwave 84, Catppuccin Mocha, Dracula, Nord, Rosé Pine, Vesper, Oxocarbon, Aura Dark, Gruvbox, and 30+ more.
+- **5 Cairo Live Swatches**: Every card renders 5 live circular Cairo color swatches: Background, Surface, Primary Accent, Secondary Accent, and Foreground Text.
+- **Category Filter Pills**: Fast filtering by *All*, *Cyberpunk & Neon*, *Dark & OLED*, *Pastel & Soft*, *Monospaced & Minimal*, and *Retro & Warm* with live count badges.
+- **Live Desktop Preview**: Hover or toggle live preview mode to instantly re-tint active Hyprland borders and Waybar acrylic glass without committing.
+- **Theme Wallpaper Carousel**: Cycles and previews all bundled backgrounds per theme.
+- **Brutalist Sharp Aesthetic**: Engineered with strict square edges (`rounding = 0`) for maximum visual clarity.
+- **Interactive 3D WebGL Studio**: Inspect metallic, roughness, and glass transmission shaders in Three.js PBR rendering.
 
 ---
 
@@ -19,12 +31,12 @@
                     ▼                                             ▼
           [GTK3 Preview Grid]                           [3D WebGL Studio]
           Fast 2D theme card selector                   Interactive Three.js PBR
-          with instant live previews                    metallic & glass shader sim
+          with 5 live Cairo swatches                    metallic & glass shader sim
 ```
 
 ---
 
-## 🌟 Curated 18 Modern Themes
+## 🌟 Curated Palettes (43 Total)
 
 1. **Tokyo Storm** (Tokyo Night Storm)
 2. **Cyberpunk Neon** (High Contrast Cyberpunk)
@@ -44,6 +56,9 @@
 16. **Monokai Pro** (Monokai Pro High Contrast)
 17. **Solarized Dark** (Solarized Classic)
 18. **Ryoku Crimson** (High-Contrast Red Accent)
+19. **Gruvbox Dark** (Retro Warm Groove)
+20. **Matte Black** (Zero Distraction Stealth)
+21. *...and 23 additional community curated themes!*
 
 ---
 
@@ -62,7 +77,7 @@ ln -sf $(pwd)/bin/hypr-theme-studio ~/.local/bin/
 ### 2. Usage
 
 ```bash
-# Launch GTK3 Theme Selector Grid
+# Launch GTK3 Theme Selector Grid with Cairo swatches
 hypr-theme-studio
 
 # Launch Interactive 3D WebGL Material Studio
@@ -71,7 +86,7 @@ hypr-theme-studio 3d
 # List all available themes
 hypr-theme-studio list
 
-# Switch to any theme instantly
+# Switch to any theme instantly (<100ms, zero restarts)
 hypr-theme-studio set tokyo-storm
 hypr-theme-studio set cyberpunk-neon
 hypr-theme-studio set synthwave-84
@@ -83,4 +98,4 @@ hypr-theme-studio next
 ---
 
 ## 📜 License
-MIT License. Created by [Pravin](https://github.com/apravint) for IRAM OS.
+MIT License. Created by [Pravin](https://github.com/apravint) for [IRAM OS](https://github.com/apravint/iram-os).
