@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  shell:
+    name: Shell syntax and ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Find shell scripts
+        run: |
+          git ls-files -z | while IFS= read -r -d '' f; do
+            case "$f" in *.png|*.jpg|*.webp|*.ttf|*.svg|*.svgz) continue;; esac
+            [ -f "$f" ] || continue
+            first=$(head -n1 "$f" | tr -d '\0' | head -c 200)
+            if printf '%s' "$first" | grep -aqE '^#!.*[/ ](ba)?sh( |$)'; then
+              echo "$f"
+            elif [[ "$f" == *.sh ]] && ! printf '%s' "$first" | grep -aq '^#!'; then
+              echo "$f"
+            fi
+          done > "$RUNNER_TEMP/scripts.txt"
+          cat "$RUNNER_TEMP/scripts.txt"
+      - name: bash -n
+        run: xargs -a "$RUNNER_TEMP/scripts.txt" -r -d '\n' -n1 bash -n
+      - name: ShellCheck
+        run: xargs -a "$RUNNER_TEMP/scripts.txt" -r -d '\n' shellcheck -S warning
+
+
+  python:
+    name: Ruff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff==0.17.4
+      - name: Ruff (syntax errors and undefined names)
+        run: ruff check --isolated --select E9,F63,F7,F82 src/gui.py
+
+  html:
+    name: HTML and inline script syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check HTML structure and inline scripts
+        run: |
+          python3 - <<'PY'
+          import pathlib, subprocess, sys, tempfile
+          from html.parser import HTMLParser
+
+          VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"}
+
+          class Checker(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.stack, self.errors, self.scripts = [], [], []
+                  self.in_script = False
+                  self.buf = []
+
+              def handle_starttag(self, tag, attrs):
+                  if tag in VOID:
+                      return
+                  self.stack.append(tag)
+                  if tag == "script" and not dict(attrs).get("src"):
+                      self.in_script = True
+                      self.buf = []
+
+              def handle_endtag(self, tag):
+                  if tag in VOID:
+                      return
+                  if tag == "script" and self.in_script:
+                      self.scripts.append("".join(self.buf))
+                      self.in_script = False
+                  if not self.stack or self.stack[-1] != tag:
+                      self.errors.append(f"unexpected </{tag}> at line {self.getpos()[0]}")
+                  else:
+                      self.stack.pop()
+
+              def handle_data(self, data):
+                  if self.in_script:
+                      self.buf.append(data)
+
+          failed = False
+          for path in sorted(pathlib.Path(".").rglob("*.html")):
+              if "node_modules" in path.parts:
+                  continue
+              checker = Checker()
+              checker.feed(path.read_text(encoding="utf-8"))
+              problems = list(checker.errors)
+              if checker.stack:
+                  problems.append("unclosed tags: " + ", ".join(checker.stack))
+              for i, code in enumerate(checker.scripts):
+                  with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False) as tmp:
+                      tmp.write(code)
+                  result = subprocess.run(["node", "--check", tmp.name], capture_output=True, text=True)
+                  if result.returncode:
+                      problems.append(f"inline script #{i + 1}: {result.stderr.strip().splitlines()[0]}")
+              print(("FAIL " if problems else "ok   ") + str(path))
+              for p in problems:
+                  print("  " + p)
+              failed |= bool(problems)
+          sys.exit(1 if failed else 0)
+          PY
